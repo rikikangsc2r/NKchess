@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": "true",
+        ".write": "true",
+        "player1": {
+          ".validate": "newData.hasChildren(['username', 'deviceId']) || newData.val() === null"
+        },
+        "player2": {
+          ".validate": "newData.hasChildren(['username', 'deviceId']) || newData.val() === null"
+        },
+        "last_active_p1": {
+          ".validate": "newData.isNumber() || newData.val() === null"
+        },
+        "last_active_p2": {
+          ".validate": "newData.isNumber() || newData.val() === null"
+        }
+      }
+    }
+  }
+}

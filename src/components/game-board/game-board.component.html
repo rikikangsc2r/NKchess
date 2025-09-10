@@ -1,0 +1,145 @@
+<div class="flex flex-col items-center">
+  <!-- Game Status Header -->
+  <div class="w-full max-w-lg mb-4 p-4 bg-gray-800 rounded-lg shadow-md flex justify-between items-center">
+    <div>
+      <h2 class="text-xl font-bold">
+        @if (opponentLeftMessage()) {
+          <span>Game Over!</span>
+        } @else if(gameState() === 'checkmate' || gameState() === 'stalemate') {
+          <span>Game Over!</span>
+        } @else if (gameState() === 'promotion') {
+          <span>Pawn Promotion</span>
+        } @else {
+          Turn: <span [class]="currentPlayer() === 'w' ? 'text-white' : 'text-gray-300'">
+            {{ currentPlayer() === playerColor() ? 'Your Turn' : (opponent()?.username ?? (currentPlayer() === 'w' ? 'White' : 'Black')) + "'s Turn" }}
+          </span>
+        }
+      </h2>
+      @if (opponentLeftMessage()) {
+        <p class="text-red-400 font-semibold">{{ opponentLeftMessage() }}</p>
+      } @else if(gameState() === 'checkmate') {
+        <p class="text-green-400 font-semibold">{{ winner() === playerColor() ? 'You win' : (opponent()?.username ?? (winner() === 'w' ? 'White' : 'Black')) + ' wins' }} by checkmate!</p>
+      } @else if(gameState() === 'stalemate') {
+        <p class="text-gray-400 font-semibold">Draw by stalemate!</p>
+      } @else if(gameState() === 'check') {
+        <p class="text-yellow-400 font-semibold">Check!</p>
+      } @else if (gameState() === 'promotion') {
+        <p class="text-indigo-400 font-semibold">Choose a new piece.</p>
+      } @else if (gameMode() === 'online') {
+        <p class="text-sm text-gray-400">Playing against {{ opponent()?.username }}</p>
+      }
+    </div>
+    <div class="flex gap-2">
+      <button (click)="resetGame()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-md transition-colors">
+        {{ gameMode() === 'online' ? 'Resign' : 'Reset' }}
+      </button>
+      <button (click)="gameExit.emit()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition-colors">
+        Exit
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Piece for Touch Drag -->
+  @if(floatingPiece(); as fp) {
+    <img 
+      [src]="pieceImageMap[fp.piece.color][fp.piece.type]" 
+      alt="dragged piece"
+      [style]="floatingPieceStyle()"
+      class="object-contain drop-shadow-2xl"
+    />
+  }
+
+  <!-- Chess Board Container -->
+  <div 
+    class="relative w-full max-w-lg"
+    (touchmove)="onTouchMove($event)"
+    (touchend)="onTouchEnd($event)"
+    (touchcancel)="onTouchEnd($event)"
+  >
+    <!-- Board -->
+    <div class="grid grid-cols-8 border-4 border-amber-800 rounded-lg overflow-hidden shadow-2xl aspect-square w-full">
+      @for(row of board(); track r; let r = $index) {
+        @for(square of row; track c; let c = $index) {
+          <div
+            (click)="handleSquareClick(r, c)"
+            (dragover)="onDragOver($event)"
+            (drop)="onDrop($event, r, c)"
+            class="flex items-center justify-center aspect-square transition-colors duration-150"
+            [class]="(r + c) % 2 === 0 ? 'bg-amber-200' : 'bg-amber-600'"
+            [class.cursor-pointer]="isMyTurn() && ((square && square.color === currentPlayer()) || isSquareLegalMove()(r, c))"
+            [class.cursor-not-allowed]="!isMyTurn()"
+            [class.ring-4]="selectedSquare()?.row === r && selectedSquare()?.col === c"
+            [class.ring-inset]="selectedSquare()?.row === r && selectedSquare()?.col === c"
+            [class.ring-indigo-500]="selectedSquare()?.row === r && selectedSquare()?.col === c"
+          >
+            <div class="relative w-full h-full flex items-center justify-center">
+              <!-- Coordinate Labels -->
+              @if(c === 0) {
+                <span class="absolute left-1 top-0 text-xs font-bold" [class]="(r+c)%2 === 0 ? 'text-amber-700/80' : 'text-amber-200/80'">{{ 8 - r }}</span>
+              }
+              @if(r === 7) {
+                <span class="absolute right-1 bottom-0 text-xs font-bold" [class]="(r+c)%2 === 0 ? 'text-amber-700/80' : 'text-amber-200/80'">{{ ['a','b','c','d','e','f','g','h'][c] }}</span>
+              }
+
+               <!-- Last Move Highlight -->
+              @if((lastMove()?.from.row === r && lastMove()?.from.col === c) || (lastMove()?.to.row === r && lastMove()?.to.col === c)) {
+                <div class="absolute inset-0" [class]="(lastMove()?.to.row === r && lastMove()?.to.col === c) ? 'bg-yellow-500/40' : 'bg-yellow-400/40'"></div>
+              }
+
+              <!-- Legal Move Indicator -->
+              @if(isMyTurn() && isSquareLegalMove()(r,c)) {
+                <div 
+                  class="absolute rounded-full"
+                  [class]="square ? 'w-full h-full border-8 border-red-500/50' : 'w-1/3 h-1/3 bg-green-500/50'">
+                </div>
+              }
+
+              <!-- Piece -->
+              @if (square) {
+                <img
+                  [src]="pieceImageMap[square.color][square.type]"
+                  alt="{{ square.color === 'w' ? 'White' : 'Black' }} piece"
+                  [draggable]="isMyTurn()"
+                  (dragstart)="onDragStart($event, r, c)"
+                  (dragend)="onDragEnd($event)"
+                  (touchstart)="onTouchStart($event, r, c)"
+                  [class.opacity-50]="draggedPiece()?.row === r && draggedPiece()?.col === c"
+                  class="w-5/6 h-5/6 object-contain select-none drop-shadow-lg relative"
+                />
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+    
+    <!-- Not Your Turn Overlay -->
+    @if (gameMode() === 'online' && !isMyTurn() && gameState() !== 'checkmate' && gameState() !== 'stalemate' && !opponentLeftMessage()) {
+      <div class="absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded-lg cursor-not-allowed">
+        <div class="text-center">
+            <h3 class="text-2xl font-bold text-white">Opponent's Turn</h3>
+            <p class="text-gray-300">Waiting for {{ opponent()?.username }} to move...</p>
+        </div>
+      </div>
+    }
+
+    <!-- Promotion Modal -->
+    @if (gameState() === 'promotion' && isMyTurn()) {
+        <div class="absolute inset-0 bg-black/70 flex items-center justify-center z-20 rounded-lg">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4 border border-gray-600">
+                <h3 class="text-2xl font-bold text-white">Promote Pawn</h3>
+                <div class="flex gap-4">
+                    @for(pieceType of ['q', 'r', 'b', 'n']; track pieceType) {
+                        <button (click)="handlePromotion(pieceType)"
+                                class="w-20 h-20 bg-gray-700 rounded-lg flex items-center justify-center p-2 hover:bg-indigo-600 transition-colors">
+                           <img [src]="pieceImageMap[playerColor() ?? currentPlayer()][pieceType]"
+                                alt="Promote to {{ pieceType }}"
+                                class="w-full h-full object-contain drop-shadow-lg">
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+  </div>
+</div>

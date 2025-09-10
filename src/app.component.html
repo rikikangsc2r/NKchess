@@ -1,0 +1,24 @@
+<main class="min-h-screen bg-gray-900 text-gray-100 flex flex-col items-center justify-center p-4 font-sans">
+  <div class="w-full max-w-4xl mx-auto">
+    @switch (currentView()) {
+      @case ('login') {
+        <app-login />
+      }
+      @case ('menu') {
+        <app-menu (startLocalGame)="startLocalGame()" (startMatchmaking)="startMatchmaking()" />
+      }
+      @case ('matchmaking') {
+        <app-matchmaking (cancel)="cancelMatchmaking()" />
+      }
+      @case ('game') {
+        <app-game-board 
+          (gameExit)="exitGame()" 
+          [gameMode]="gameMode()!"
+          [roomId]="onlineGameConfig()?.roomId ?? null"
+          [playerColor]="onlineGameConfig()?.playerColor ?? null"
+          [opponent]="onlineGameConfig()?.opponent ?? null"
+        />
+      }
+    }
+  </div>
+</main>

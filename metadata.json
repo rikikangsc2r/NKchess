@@ -1,0 +1,5 @@
+{
+  "name": "NKchess Mabar",
+  "description": "A modern chess application allowing users to play locally with friends. Features a simple user system with an automatically generated device ID. Online matchmaking is coming soon.",
+  "requestFramePermissions": []
+}

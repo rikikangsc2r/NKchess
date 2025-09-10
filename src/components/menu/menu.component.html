@@ -1,0 +1,28 @@
+<div class="flex flex-col items-center p-8 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
+  <h1 class="text-4xl font-bold text-white mb-4">Welcome, {{ user()?.username }}!</h1>
+  <p class="text-gray-400 mb-8">Choose a game mode to start playing.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-lg">
+    <!-- Local Match -->
+    <div class="bg-gray-700 p-6 rounded-lg border border-gray-600 flex flex-col items-center text-center">
+      <h2 class="text-2xl font-semibold mb-3 text-white">Local Match</h2>
+      <p class="text-gray-300 mb-6">Play against a friend on the same device. Pass and play.</p>
+      <button 
+        (click)="startLocalGame.emit()"
+        class="w-full px-4 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition duration-200">
+        Play Now
+      </button>
+    </div>
+
+    <!-- Matchmaking -->
+    <div class="bg-gray-700 p-6 rounded-lg border border-gray-600 flex flex-col items-center text-center">
+      <h2 class="text-2xl font-semibold mb-3 text-white">Online Matchmaking</h2>
+      <p class="text-gray-300 mb-6">Find an opponent online and climb the leaderboard.</p>
+      <button 
+        (click)="startMatchmaking.emit()"
+        class="w-full px-4 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition duration-200">
+        Find Match
+      </button>
+    </div>
+  </div>
+</div>
